@@ -2,7 +2,7 @@ package log4go
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/Shopify/sarama"
@@ -156,7 +156,7 @@ func (k *KafKaWriter) Write(r *Record) error {
 	}
 
 	if k.conf.Debug {
-		fmt.Printf("kafka-writer msg [topic: %v, timestamp: %v, brokers: %v]\nkey:   %v\nvalue: %v\n", msg.Topic,
+		log.Printf("kafka-writer msg [topic: %v, timestamp: %v, brokers: %v]\nkey:   %v\nvalue: %v\n", msg.Topic,
 			msg.Timestamp, k.conf.Brokers, key, jsonData)
 	}
 	go k.asyncWriteMessages(msg)
@@ -182,12 +182,12 @@ next:
 				partition, offset, err := k.producer.SendMessage(mes)
 
 				if err != nil {
-					fmt.Printf("SendMessage(topic=%s, partition=%v, offset=%v, key=%s, value=%s,timstamp=%v) err=%s\n\n", mes.Topic,
+					log.Printf("SendMessage(topic=%s, partition=%v, offset=%v, key=%s, value=%s,timstamp=%v) err=%s\n\n", mes.Topic,
 						partition, offset, mes.Key, mes.Value, mes.Timestamp, err.Error())
 					continue
 				} else {
 					if k.conf.Debug {
-						fmt.Printf("SendMessage(topic=%s, partition=%v, offset=%v, key=%s, value=%s,timstamp=%v)\n\n", mes.Topic,
+						log.Printf("SendMessage(topic=%s, partition=%v, offset=%v, key=%s, value=%s,timstamp=%v)\n\n", mes.Topic,
 							partition, offset, mes.Key, mes.Value, mes.Timestamp)
 					}
 				}
@@ -201,7 +201,7 @@ next:
 
 // Start start the kafka writer
 func (k *KafKaWriter) Start() (err error) {
-	fmt.Print("start kafka writer ....\n")
+	log.Println("start kafka writer ...")
 	cfg := sarama.NewConfig()
 	cfg.Producer.Return.Successes = k.conf.ProducerReturnSuccesses
 	cfg.Producer.Timeout = k.conf.ProducerTimeout
@@ -232,7 +232,7 @@ func (k *KafKaWriter) Start() (err error) {
 
 	k.producer, err = sarama.NewSyncProducer(k.conf.Brokers, cfg)
 	if err != nil {
-		fmt.Printf("sarama.NewSyncProducer err, message=%s \n", err)
+		log.Printf("sarama.NewSyncProducer err, message=%s \n", err)
 		return err
 	}
 	size := k.conf.BufferSize
@@ -242,7 +242,7 @@ func (k *KafKaWriter) Start() (err error) {
 	k.messages = make(chan *sarama.ProducerMessage, size)
 
 	go k.daemonProducer()
-	fmt.Print("start kafka writer ok\n")
+	log.Println("start kafka writer ok")
 	return err
 }
 
@@ -252,8 +252,7 @@ func (k *KafKaWriter) Stop() {
 		close(k.messages)
 		<-k.stop
 		if err := k.producer.Close(); err != nil {
-			fmt.Printf("stop kafka writer failed:%v\n", err)
+			log.Printf("stop kafka writer failed:%v\n", err)
 		}
-
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	log "github.com/kdpujie/log4go"
+	"github.com/kdpujie/log4go/util"
 )
 
 // SetLog set logger
@@ -28,8 +29,9 @@ func SetLog() {
 				"appId":    188,
 				"appEnv":   "test",
 				"hostname": "xwi88",
-				"now":      time.Now().UnixNano(),
 			},
+			ServerIP: util.GetLocalIpByTcp(),
+			Now:      time.Now().Unix(),
 		},
 	}
 	w2 := log.NewKafKaWriterWithWriter(kafKaConf, log.ERROR)
