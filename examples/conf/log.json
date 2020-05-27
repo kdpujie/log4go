@@ -1,0 +1,40 @@
+{
+  "level": "info",
+  "full_path": true,
+  "file_writer": {
+    "level": "debug",
+    "log_path": "/tmp/access-%Y%M%D.log",
+    "enable": false
+  },
+  "console_writer": {
+    "level": "error",
+    "enable": true,
+    "color": true
+  },
+  "ali_log_hub_writer": {
+    "level": "debug",
+    "enable": false,
+    "log_name": "",
+    "project_name": "",
+    "endpoint": "",
+    "access_key_id": "",
+    "access_key_secret": "",
+    "store_name": "dsp_syslog",
+    "buf_size": 1000
+  },
+  "kafka_writer": {
+    "level": "ERROR",
+    "on": false,
+    "buffer_size": 10,
+    "debug": true,
+    "specify_version": true,
+    "version": "0.10.0.1",
+    "key": "kafka-test",
+    "producer_topic": "kafka-log4go-test",
+    "producer_return_successes": true,
+    "producer_timeout": 1000000000,
+    "brokers": [
+      "127.0.0.1:9092"
+    ]
+  }
+}
