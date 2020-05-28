@@ -12,12 +12,13 @@ const timestampFormat = "2006-01-02T15:04:05.000+0800"
 
 // KafKaMSGFields kafka msg fields
 type KafKaMSGFields struct {
-	ESIndex     string                 `json:"es_index" mapstructure:"es_index"` // required, init field
-	Level       string                 // dynamic, set by logger
-	Code        string                 `json:"file" mapstructure:"file"`                 // source code file:line_number
-	Message     string                 `json:"message" mapstructure:"message"`           // required, dynamic
+	ESIndex     string                 `json:"es_index" mapstructure:"es_index"`         // required, init field
+	Level       string                 `json:"level"`                                    // dynamic, set by logger
+	Code        string                 `json:"file"`                                     // dynamic, source code file:line_number
+	Message     string                 `json:"message"`                                  // dynamic, message
 	ServerIP    string                 `json:"server_ip" mapstructure:"server_ip"`       // required, init field, set by app
-	Timestamp   string                 `json:"time_stamp" mapstructure:"time_stamp"`     // required, dynamic, set by logger
+	PublicIP    string                 `json:"public_ip" mapstructure:"public_ip"`       // required, init field, set by app
+	Timestamp   string                 `json:"timestamp" mapstructure:"timestamp"`       // required, dynamic, set by logger
 	Now         int64                  `json:"now" mapstructure:"now"`                   // choice, unix timestamp, second
 	ExtraFields map[string]interface{} `json:"extra_fields" mapstructure:"extra_fields"` // extra fields will be added
 }
@@ -126,7 +127,7 @@ func (k *KafKaWriter) Write(r *Record) error {
 		return err
 	}
 
-	delete(structData, "extraFields")
+	delete(structData, "extra_fields")
 
 	// not exist new fields will be added
 	for k, v := range data.ExtraFields {
@@ -208,7 +209,10 @@ func (k *KafKaWriter) Start() (err error) {
 
 	// if want set timestamp for data should set version
 	versionStr := k.conf.Version
-	kafkaVer := sarama.V0_10_0_1
+	// now 2.5.0, ref https://kafka.apache.org/downloads#2.5.0
+	// if you use low version kafka, you can specify the versionStr=0.10.0.1, (V0_10_0_1) and
+	// k.conf.SpecifyVersion=true
+	kafkaVer := sarama.V2_5_0_0
 
 	if k.conf.SpecifyVersion {
 		if versionStr != "" {
@@ -218,7 +222,7 @@ func (k *KafKaWriter) Start() (err error) {
 			}
 		}
 	}
-	// if not specify the version, use the sarama.V0_10_0_1 to guarante the timestamp can be control
+	// if not specify the version, use the sarama.V2_5_0_0 to guarante the timestamp can be control
 	cfg.Version = kafkaVer
 
 	// NewHashPartitioner returns a Partitioner which behaves as follows. If the message's key is nil then a
