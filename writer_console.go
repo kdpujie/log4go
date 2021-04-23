@@ -35,17 +35,17 @@ func (r *colorRecord) String() string {
 
 // ConsoleWriter console writer define
 type ConsoleWriter struct {
-	level int
-	color bool
+	config *ConfConsoleWriter
+	level  int
 }
 
 // NewConsoleWriter create new console writer
-func NewConsoleWriter() *ConsoleWriter {
-	return &ConsoleWriter{}
+func NewConsoleWriter(conf *ConfConsoleWriter) *ConsoleWriter {
+	return &ConsoleWriter{config: conf, level: getLevel(conf.Level)}
 }
 
 // NewConsoleWriterWithLevel create new console writer with level
-func NewConsoleWriterWithLevel(level int) *ConsoleWriter {
+func NewConsoleWriterWithLevel(level int, conf *ConfConsoleWriter) *ConsoleWriter {
 	defaultLevel := DEBUG
 	maxLevel := len(LevelFlags)
 	// maxLevel >= 1 always true
@@ -55,7 +55,8 @@ func NewConsoleWriterWithLevel(level int) *ConsoleWriter {
 		defaultLevel = level
 	}
 	return &ConsoleWriter{
-		level: defaultLevel,
+		level:  defaultLevel,
+		config: conf,
 	}
 }
 
@@ -64,7 +65,7 @@ func (w *ConsoleWriter) Write(r *Record) (err error) {
 	if r.level < w.level {
 		return nil
 	}
-	if w.color {
+	if w.config.Color {
 		_, err = fmt.Fprint(os.Stdout, ((*colorRecord)(r)).String())
 	} else {
 		_, err = fmt.Fprint(os.Stdout, r.String())
@@ -75,9 +76,4 @@ func (w *ConsoleWriter) Write(r *Record) (err error) {
 // Init console init without implement
 func (w *ConsoleWriter) Init() error {
 	return nil
-}
-
-// SetColor console output color control
-func (w *ConsoleWriter) SetColor(c bool) {
-	w.color = c
 }

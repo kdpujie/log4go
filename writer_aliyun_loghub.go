@@ -9,42 +9,57 @@ package log4go
 import (
 	"time"
 
-	"github.com/aliyun/aliyun-log-go-sdk"
+	sls "github.com/aliyun/aliyun-log-go-sdk"
 	"google.golang.org/protobuf/proto"
 )
 
+var DefaultBufSize = 10
+
 // AliLogHubWriter ali log hub writer
 type AliLogHubWriter struct {
-	level           int
-	logName         string
-	logSource       string
-	projectName     string
-	endpoint        string
-	accessKeyId     string
-	accessKeySecret string
-	storeName       string
-	project         *sls.LogProject
-	store           *sls.LogStore
-	bufLogs         []*sls.Log
-	n               int
-	err             error
+	level   int
+	config  *ConfAliLogHubWriter
+	project *sls.LogProject
+	store   *sls.LogStore
+	bufLogs []*sls.Log
+	n       int
+	err     error
 }
 
 // NewAliLogHubWriter create new ali log hub writer
-func NewAliLogHubWriter(bufSize int) *AliLogHubWriter {
+func NewAliLogHubWriter(conf *ConfAliLogHubWriter) *AliLogHubWriter {
+	if conf.BufSize == 0 {
+		conf.BufSize = DefaultBufSize
+	}
 	return &AliLogHubWriter{
-		bufLogs: make([]*sls.Log, bufSize),
+		level:   getLevel(conf.Level),
+		config:  conf,
+		bufLogs: make([]*sls.Log, conf.BufSize),
+	}
+}
+
+func NewAliLogHubWriterWithLevel(level int, conf *ConfAliLogHubWriter) *AliLogHubWriter {
+	defaultLevel := DEBUG
+	maxLevel := len(LevelFlags)
+	// maxLevel >= 1 always true
+	maxLevel = maxLevel - 1
+
+	if level >= defaultLevel && level <= maxLevel {
+		defaultLevel = level
+	}
+	return &AliLogHubWriter{
+		level:  defaultLevel,
+		config: conf,
 	}
 }
 
 // Init init ali log hub writer init
 func (w *AliLogHubWriter) Init() (err error) {
-	w.project, err = sls.NewLogProject(w.projectName, w.endpoint, w.accessKeyId, w.accessKeySecret)
-	if err != nil {
-		return
+	if w.project, err = sls.NewLogProject(w.config.ProjectName, w.config.Endpoint, w.config.AccessKeyId, w.config.AccessKeySecret); err != nil {
+		return err
 	}
 	w.project.UsingHTTP = true
-	w.store, err = w.project.GetLogStore(w.storeName)
+	w.store, err = w.project.GetLogStore(w.config.LogStoreName)
 	return
 }
 
@@ -89,8 +104,8 @@ func (w *AliLogHubWriter) Flush() error {
 		return nil
 	}
 	logGroup := &sls.LogGroup{
-		Topic:  proto.String(w.logName),
-		Source: proto.String(w.logSource),
+		Topic:  proto.String(w.config.Topic),
+		Source: proto.String(w.config.Source),
 		Logs:   w.bufLogs[0:w.n],
 	}
 	if w.err = w.store.PutLogs(logGroup); w.err != nil {
@@ -98,29 +113,6 @@ func (w *AliLogHubWriter) Flush() error {
 	}
 	w.n = 0
 	return nil
-}
-
-// SetLog ...
-func (w *AliLogHubWriter) SetLog(logName, logSource string) {
-	w.logName = logName
-	w.logSource = logSource
-}
-
-// SetProject ...
-func (w *AliLogHubWriter) SetProject(pName, sName string) {
-	w.projectName = pName
-	w.storeName = sName
-}
-
-// SetEndpoint ...
-func (w *AliLogHubWriter) SetEndpoint(endpoint string) {
-	w.endpoint = endpoint
-}
-
-// SetAccessKey ...
-func (w *AliLogHubWriter) SetAccessKey(accessKeyId, accessKeySecret string) {
-	w.accessKeyId = accessKeyId
-	w.accessKeySecret = accessKeySecret
 }
 
 func (w *AliLogHubWriter) writeBuf(log *sls.Log) error {

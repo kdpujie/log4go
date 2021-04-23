@@ -1,0 +1,34 @@
+log4go:
+  level: INFO
+  file_writer:
+    level: DEBUG
+    path_pattern: ./log/app-%Y%M%D.log
+    enable: false
+  console_writer:
+    level: DEBUG
+    enable: true
+    color: true
+  ali_log_hub_writer:
+    level: INFO
+    enable: true
+    topic: "sys"
+    project_name: "ubix-architect-test"
+    endpoint: "cn-beijing.log.aliyuncs.com"
+    access_key_id: "LTAI5tGhwP45myWW3fsCGBBj"
+    access_key_secret: "wlu38V2R04JW7Nv3hMoxkKre2bnCcb"
+    log_store_name: "sys-log-index"
+    buf_size: 5
+  kafka_writer:
+    level: DEBUG
+    enable: false
+    buffer_size: 1000
+    debug: false
+    version: "2.4.1"
+    #version: "0.10.0.1"  # 默认版本 0.10.0.1，支持配置生成时间戳的最小版本,如无需要请勿更改，版本不一致会出现 EOF error
+    key: "" # kafka producer key, temp set, choice field
+    producer_topic: d-application-sys-log
+    producer_return_successes: true
+    producer_timeout: 2s
+    brokers: [10.14.41.57:9092, 10.14.41.58:9092, 10.14.41.59:9092]
+    msg:
+      es_index: d_engine_sys  # dsp_{project_name}[_类别[bus|sys|test]]

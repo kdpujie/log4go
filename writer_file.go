@@ -14,6 +14,7 @@ var pathVariableTable map[byte]func(*time.Time) int
 
 // FileWriter file writer define
 type FileWriter struct {
+	config        *ConfFileWriter
 	level         int
 	pathFmt       string
 	file          *os.File
@@ -23,12 +24,12 @@ type FileWriter struct {
 }
 
 // NewFileWriter create new file writer
-func NewFileWriter() *FileWriter {
-	return &FileWriter{}
+func NewFileWriter(conf *ConfFileWriter) *FileWriter {
+	return &FileWriter{level: getLevel(conf.Level), config: conf}
 }
 
 // NewFileWriterWithLevel create new file writer with level
-func NewFileWriterWithLevel(level int) *FileWriter {
+func NewFileWriterWithLevel(level int, conf *ConfFileWriter) *FileWriter {
 	defaultLevel := DEBUG
 	maxLevel := len(LevelFlags)
 	// maxLevel >= 1 always true
@@ -38,12 +39,16 @@ func NewFileWriterWithLevel(level int) *FileWriter {
 		defaultLevel = level
 	}
 	return &FileWriter{
-		level: defaultLevel,
+		level:  defaultLevel,
+		config: conf,
 	}
 }
 
 // Init for file writer
 func (w *FileWriter) Init() error {
+	if err := w.setPathPattern(w.config.PathPattern); err != nil {
+		return err
+	}
 	return w.Rotate()
 }
 
@@ -62,7 +67,7 @@ func (w *FileWriter) Write(r *Record) error {
 }
 
 // SetPathPattern for file writer
-func (w *FileWriter) SetPathPattern(pattern string) error {
+func (w *FileWriter) setPathPattern(pattern string) error {
 	n := 0
 	for _, c := range pattern {
 		if c == '%' {

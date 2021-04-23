@@ -10,38 +10,6 @@ import (
 
 const timestampFormat = "2006-01-02T15:04:05.000+0800"
 
-// KafKaMSGFields kafka msg fields
-type KafKaMSGFields struct {
-	ESIndex     string                 `json:"es_index" mapstructure:"es_index"`         // required, init field
-	Level       string                 `json:"level"`                                    // dynamic, set by logger
-	Code        string                 `json:"file"`                                     // dynamic, source code file:line_number
-	Message     string                 `json:"message"`                                  // dynamic, message
-	ServerIP    string                 `json:"server_ip" mapstructure:"server_ip"`       // required, init field, set by app
-	PublicIP    string                 `json:"public_ip" mapstructure:"public_ip"`       // required, init field, set by app
-	Timestamp   string                 `json:"timestamp" mapstructure:"timestamp"`       // required, dynamic, set by logger
-	Now         int64                  `json:"now" mapstructure:"now"`                   // choice, unix timestamp, second
-	ExtraFields map[string]interface{} `json:"extra_fields" mapstructure:"extra_fields"` // extra fields will be added
-}
-
-// ConfKafKaWriter kafka writer conf
-type ConfKafKaWriter struct {
-	Level          string `json:"level" mapstructure:"level"`
-	Enable         bool   `json:"enable" mapstructure:"enable"`
-	BufferSize     int    `json:"buffer_size" mapstructure:"buffer_size"`
-	Debug          bool   `json:"debug" mapstructure:"debug"`                     // if true, will output the send msg
-	SpecifyVersion bool   `json:"specify_version" mapstructure:"specify_version"` // if use the input version, default false
-	Version        string `json:"version" mapstructure:"version"`                 // used to specify the kafka version, ex: 0.10.0.1 or 1.1.1
-
-	Key string `json:"key" mapstructure:"key"` // kafka producer key, temp set, choice field
-
-	ProducerTopic           string        `json:"producer_topic" mapstructure:"producer_topic"`
-	ProducerReturnSuccesses bool          `json:"producer_return_successes" mapstructure:"producer_return_successes"`
-	ProducerTimeout         time.Duration `json:"producer_timeout" mapstructure:"producer_timeout"` // ms
-	Brokers                 []string      `json:"brokers" mapstructure:"brokers"`
-
-	MSG KafKaMSGFields
-}
-
 // KafKaWriter kafka writer
 type KafKaWriter struct {
 	level    int
@@ -56,21 +24,16 @@ type KafKaWriter struct {
 
 // NewKafKaWriter new kafka writer
 func NewKafKaWriter(conf *ConfKafKaWriter) *KafKaWriter {
-	defaultLevel := 0
-	if conf.Level != "" {
-		defaultLevel = getLevel0(conf.Level, defaultLevel)
-	}
-
 	return &KafKaWriter{
 		conf:  conf,
 		quit:  make(chan struct{}),
 		stop:  make(chan struct{}),
-		level: defaultLevel,
+		level: getLevel(conf.Level),
 	}
 }
 
 // NewKafKaWriterWithWriter new kafka writer with level
-func NewKafKaWriterWithWriter(conf *ConfKafKaWriter, level int) *KafKaWriter {
+func NewKafKaWriterWithWriter(level int, conf *ConfKafKaWriter) *KafKaWriter {
 	defaultLevel := DEBUG
 	maxLevel := len(LevelFlags)
 	// maxLevel >= 1 always true
