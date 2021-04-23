@@ -12,10 +12,10 @@ log4go:
     level: INFO
     enable: true
     topic: "sys"
-    project_name: "ubix-architect-test"
-    endpoint: "cn-beijing.log.aliyuncs.com"
-    access_key_id: "LTAI5tGhwP45myWW3fsCGBBj"
-    access_key_secret: "wlu38V2R04JW7Nv3hMoxkKre2bnCcb"
+    project_name: ""
+    endpoint: ""
+    access_key_id: ""
+    access_key_secret: ""
     log_store_name: "sys-log-index"
     buf_size: 5
   kafka_writer:
