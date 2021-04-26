@@ -11,7 +11,7 @@ import (
 
 // GetLocalIpByTcp 有外网的情况下, 通过tcp访问获得本机ip地址
 func GetLocalIpByTcp() string {
-	conn, err := net.Dial("tcp", "www.baidu.com:80")
+	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		return ""
 	}
